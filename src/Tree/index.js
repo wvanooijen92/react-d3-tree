@@ -409,17 +409,29 @@ class Tree extends React.Component {
   recalculateNodePosition = (node, index, nodes) => {
     const { nodeSize } = this.props;
     if (node.stackChildren && node.children) {
-      node.children.forEach((child, index) => {
-        const childNode = nodes.find(n =>
-          n.id === child.id
-        )
+      node.children
+        .sort((first, second) => {
+          if (first.order && second.order) {
+            if (first.order < second.order)
+              return -1
 
-        const newX = node.x + (nodeSize.x / 2);
-        const newY = (childNode.depth + 1) * nodeSize.y - (index + 1) * (nodeSize.y / 2);
+            if (first.order > second.order)
+              return 1
+          }
+          return 0
+        })
+        .forEach((child, index) => {
+          const childNode = nodes.find(n =>
+            n.id === child.id
+          )
 
-        childNode.x = newX
-        childNode.y = newY
-      })
+          const newX = node.x + (nodeSize.x * .5);
+          const newY = (childNode.depth + 1) * (nodeSize.y * 1.2) - (index) * (nodeSize.y * .75)
+          // console.log(childNode.depth, index, newY, nodeSize);
+
+          childNode.x = newX
+          childNode.y = newY
+        })
     }
   }
 

@@ -19,7 +19,7 @@ export default class Link extends React.PureComponent {
     this.applyOpacity(0, this.props.transitionDuration, done);
   }
 
-  applyOpacity(opacity, transitionDuration, done = () => {}) {
+  applyOpacity(opacity, transitionDuration, done = () => { }) {
     if (transitionDuration === 0) {
       select(this.link).style('opacity', opacity);
       done();
@@ -36,15 +36,34 @@ export default class Link extends React.PureComponent {
     const { source, target } = linkData;
     const deltaY = target.y - source.y;
 
+    if (source.stackChildren) {
+      return orientation === 'horizontal'
+        ? `M${source.y},${source.x} H${target.y} V${target.x}`
+        : `M${source.x},${source.y} V${target.y} H${target.x}`;
+    }
+
     return orientation === 'horizontal'
-      ? `M${source.y},${source.x} H${source.y + deltaY / 2} V${target.x} H${target.y}`
+      ? `M${source.y},${source.x} H${source.y + deltaY / 2} H${target.y} V${target.x}`
       : `M${source.x},${source.y} V${source.y + deltaY / 2} H${target.x} V${target.y}`;
   }
 
   drawDiagonalPath(linkData, orientation) {
+    const { source } = linkData;
     const diagonal = svg
       .diagonal()
-      .projection(d => (orientation === 'horizontal' ? [d.y, d.x] : [d.x, d.y]));
+
+    if (source.stackChildren) {
+      if (orientation === "horizontal") {
+        diagonal
+          .source(d => ({ x: d.source.y, y: d.source.x }))
+          .target(d => ({ x: d.target.y, y: d.target.x }));
+      }
+
+    } else {
+      diagonal
+        .projection(d => orientation === 'horizontal' ? [d.y, d.x] : [d.x, d.y])
+    }
+
     return diagonal(linkData);
   }
 
@@ -71,7 +90,14 @@ export default class Link extends React.PureComponent {
   }
 
   drawElbowPath(d, orientation) {
-    return orientation === 'horizontal'
+    const { source, target } = d
+    if (source.stackChildren) {
+      return orientation === 'horizontal'
+        ? `M${source.y},${source.x} H${target.y} V${target.x}`
+        : `M${source.x},${source.y} V${target.y} H${target.x}`;
+    }
+
+    return (orientation === 'horizontal')
       ? `M${d.source.y},${d.source.x}V${d.target.x}H${d.target.y}`
       : `M${d.source.x},${d.source.y}V${d.target.y}H${d.target.x}`;
   }

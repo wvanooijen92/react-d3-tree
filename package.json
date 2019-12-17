@@ -6,7 +6,6 @@
   "types": "./react-d3-tree.d.ts",
   "scripts": {
     "clean:lib": "rimraf lib/*",
-    "precommit": "lint-staged",
     "build": "yarn clean:lib && webpack --progress --colors --env build",
     "build:watch": "yarn clean:lib && webpack --progress --colors --watch --env build",
     "dev": "yarn clean:lib && webpack --progress --colors --watch --env dev",
