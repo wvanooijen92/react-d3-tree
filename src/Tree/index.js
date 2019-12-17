@@ -406,6 +406,23 @@ class Tree extends React.Component {
     }
   };
 
+  recalculateNodePosition = (node, index, nodes) => {
+    const { nodeSize } = this.props;
+    if (node.stackChildren && node.children) {
+      node.children.forEach((child, index) => {
+        const childNode = nodes.find(n =>
+          n.id === child.id
+        )
+
+        const newX = node.x + (nodeSize.x / 2);
+        const newY = (childNode.depth + 1) * nodeSize.y - (index + 1) * (nodeSize.y / 2);
+
+        childNode.x = newX
+        childNode.y = newY
+      })
+    }
+  }
+
   /**
    * generateTree - Generates tree elements (`nodes` and `links`) by
    * grabbing the rootNode from `this.state.data[0]`.
@@ -431,8 +448,8 @@ class Tree extends React.Component {
         (a, b) => (a.parent.id === b.parent.id ? separation.siblings : separation.nonSiblings),
       )
       .children(d => (d._collapsed ? null : d._children));
-
     const rootNode = this.state.data[0];
+
     let nodes = tree.nodes(rootNode);
 
     // set `initialDepth` on first render if specified
@@ -450,6 +467,11 @@ class Tree extends React.Component {
         node.y = node.depth * depthFactor;
       });
     }
+
+    nodes.forEach(this.recalculateNodePosition);
+    // nodes[0].x = 500;
+
+    console.log('hoi', nodes);
 
     const links = tree.links(nodes);
     return { nodes, links };
@@ -501,6 +523,8 @@ class Tree extends React.Component {
       styles,
     } = this.props;
     const { translate, scale } = this.state.d3;
+    console.log(links, nodes, this.state.data)
+
     const subscriptions = { ...nodeSize, ...separation, depthFactor, initialDepth };
     return (
       <div className={`rd3t-tree-container ${zoomable ? 'rd3t-grabbable' : undefined}`}>

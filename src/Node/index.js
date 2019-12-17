@@ -34,18 +34,20 @@ export default class Node extends React.Component {
 
   setTransform(nodeData, orientation, shouldTranslateToOrigin = false) {
     const { x, y, parent } = nodeData;
+
+    const hasParent = typeof parent === 'object';
     if (shouldTranslateToOrigin) {
-      const hasParent = typeof parent === 'object';
       const originX = hasParent ? parent.x : 0;
       const originY = hasParent ? parent.y : 0;
       return orientation === 'horizontal'
         ? `translate(${originY},${originX})`
         : `translate(${originX},${originY})`;
     }
+
     return orientation === 'horizontal' ? `translate(${y},${x})` : `translate(${x},${y})`;
   }
 
-  applyTransform(transform, transitionDuration, opacity = 1, done = () => {}) {
+  applyTransform(transform, transitionDuration, opacity = 1, done = () => { }) {
     if (transitionDuration === 0) {
       select(this.node)
         .attr('transform', transform)
@@ -78,9 +80,9 @@ export default class Node extends React.Component {
     return nodeSvgShape.shape === 'none'
       ? null
       : React.createElement(nodeSvgShape.shape, {
-          ...nodeStyle.circle,
-          ...nodeSvgShape.shapeProps,
-        });
+        ...nodeStyle.circle,
+        ...nodeSvgShape.shapeProps,
+      });
   };
 
   handleOnClick = evt => {
@@ -104,6 +106,10 @@ export default class Node extends React.Component {
   render() {
     const { nodeData, nodeSize, nodeLabelComponent, allowForeignObjects, styles } = this.props;
     const nodeStyle = nodeData._children ? { ...styles.node } : { ...styles.leafNode };
+
+    console.log(this.state.transform);
+
+
     return (
       <g
         id={nodeData.id}
@@ -122,8 +128,8 @@ export default class Node extends React.Component {
         {allowForeignObjects && nodeLabelComponent ? (
           <ForeignObjectElement nodeData={nodeData} nodeSize={nodeSize} {...nodeLabelComponent} />
         ) : (
-          <SvgTextElement {...this.props} nodeStyle={nodeStyle} />
-        )}
+            <SvgTextElement {...this.props} nodeStyle={nodeStyle} />
+          )}
       </g>
     );
   }
