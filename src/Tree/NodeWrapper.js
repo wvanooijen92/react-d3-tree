@@ -3,8 +3,24 @@ import T from 'prop-types';
 import { TransitionGroup } from 'react-transition-group';
 
 // eslint-disable-next-line
-const NodeWrapper = props =>
-  props.transitionDuration > 0 ? (
+// const NodeWrapper = props =>
+//   props.transitionDuration > 0 ? (
+//     <TransitionGroup
+//       component={props.component}
+//       className={props.className}
+//       transform={props.transform}
+//     >
+//       {props.children}
+//     </TransitionGroup>
+//   ) : (
+//       <g className={props.className} transform={props.transform}>
+//         {props.children}
+//       </g>
+//     );
+
+const NodeWrapper = props => {
+  console.log(props);
+  return props.transitionDuration > 0 ? (
     <TransitionGroup
       component={props.component}
       className={props.className}
@@ -17,6 +33,7 @@ const NodeWrapper = props =>
       {props.children}
     </g>
   );
+};
 
 NodeWrapper.defaultProps = {
   component: 'g',

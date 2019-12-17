@@ -2,7 +2,8 @@ module.exports = {
   "parser": "babel-eslint",
   "extends": [
     "airbnb",
-    "prettier"
+    "prettier",
+    "prettier/react"
   ],
   "env": {
     "browser": true,
@@ -60,7 +61,7 @@ module.exports = {
     "max-len": 0,
     "newline-per-chained-call": 0,
     "no-confusing-arrow": 0,
-    "no-console": 1,
+    "no-console": 0,
     "no-param-reassign": "off",
     "no-use-before-define": 0,
     "no-underscore-dangle": "off",
