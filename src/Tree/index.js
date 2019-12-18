@@ -410,16 +410,16 @@ class Tree extends React.Component {
     const { nodeSize } = this.props;
     if (node.stackChildren && node.children) {
       node.children
-        .sort((first, second) => {
-          if (first.order && second.order) {
-            if (first.order < second.order)
-              return -1
+        // .sort((first, second) => {
+        //   if (first.order && second.order) {
+        //     if (first.order < second.order)
+        //       return -1
 
-            if (first.order > second.order)
-              return 1
-          }
-          return 0
-        })
+        //     if (first.order > second.order)
+        //       return 1
+        //   }
+        //   return 0
+        // })
         .forEach((child, index) => {
           const childNode = nodes.find(n =>
             n.id === child.id
