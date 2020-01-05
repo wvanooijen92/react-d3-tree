@@ -14,3 +14,17 @@
     cursor: -moz-grabbing;
     cursor: -webkit-grabbing;
 }
+g.node{
+    pointer-events: all;
+}
+
+.drop{
+  display:none;
+}
+
+.show.drop{
+  display: inline !important;
+}
+.activeDrag .show.drop{
+  display:none !important; 
+}

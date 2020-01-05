@@ -50,6 +50,7 @@ class Tree extends React.Component {
 
   componentDidMount() {
     this.bindZoomListener(this.props);
+    this.bindDragListener(this.props);
     this.internalState.initialRender = false;
   }
 
@@ -64,6 +65,8 @@ class Tree extends React.Component {
     ) {
       this.bindZoomListener(this.props);
     }
+
+    this.bindDragListener(this.props);
 
     if (typeof this.props.onUpdate === 'function') {
       this.props.onUpdate({
@@ -129,6 +132,150 @@ class Tree extends React.Component {
       );
     }
   }
+
+  bindDragListener(props) {
+    const { rd3tSvgClassName, rd3tGClassName } = this.state;
+    const { onDrag, onDragEnd } = props;
+    const drag = behavior.drag();
+    const self = this;
+    const g = select(`.${rd3tGClassName}`);
+
+    const startPosition = {
+      x: null,
+      y: null,
+    };
+
+    let dragging = false;
+    let target = null;
+
+    /**
+     * 
+     */
+    function handleDragStart() {
+      const node = select(this);
+
+      node.select('.drop').attr('pointer-events', 'none');
+      g.selectAll('.node').attr('pointer-events', 'none');
+
+      g.selectAll('.drop').attr('class', 'drop show');
+      node.attr('class', 'node activeDrag');
+
+      dragging = true;
+    }
+
+    /**
+     * 
+     */
+    function handleDrag() {
+      // todo this should happen on drag start, but event does not have x, y
+      if (!startPosition.x) {
+        startPosition.x = event.x;
+        startPosition.y = event.y;
+      }
+
+      if (onDrag) {
+        const data = clone(self.state.data);
+        const nodeId = this.attributes.id.value;
+        const matches = self.findNodesById(nodeId, data, []);
+        const source = matches[0];
+
+        // console.log('the end ', target, source);
+        onDrag(source, target);
+      }
+
+      event.sourceEvent.stopPropagation();
+
+      const el = select(this);
+
+      el.attr("transform", `translate(${[event.x, event.y]})`);
+    }
+
+    /**
+     * 
+     */
+    function handleDragEnd(d) {
+      const node = select(this);
+      g.selectAll('.drop').attr('class', 'drop');
+
+      node.attr('class', 'node')
+      if (startPosition.x) {
+        node
+          .attr("transform", `translate(${[startPosition.x, startPosition.y]})`);
+      }
+
+      // now restore the mouseover event or we won't be able to drag a 2nd time
+      node.select('.drop').attr('pointer-events', '');
+      g.selectAll('.node').attr('pointer-events', '');
+
+      if (onDragEnd) {
+        const nodeId = this.attributes.id.value;
+        const data = clone(self.state.data);
+        const matches = self.findNodesById(nodeId, data, []);
+
+        const source = matches[0];
+
+        // console.log('the end ', target, source);
+        onDragEnd(source, target);
+      }
+      startPosition.x = null;
+      startPosition.y = null;
+      dragging = false;
+    }
+
+    /**
+     * 
+     */
+    function mouseOverDropArea(a, b, c, d) {
+      // console.log('over');
+      if (dragging) {
+        const nodeId = this.parentNode.attributes.id.value;
+        const data = clone(self.state.data);
+        const matches = self.findNodesById(nodeId, data, []);
+        target = matches[0];
+
+        select(this).attr('opacity', 0.8);
+      }
+    }
+
+    /**
+     * 
+     */
+    function mouseOutDropArea() {
+      target = null;
+      select(this).attr('opacity', 0.2);
+    }
+
+    // console.log('bind dragging');
+
+    g.selectAll('.node')
+      .on('mousedown.dragstart', null)
+      .on('mousedown.drag', null)
+      .on('mousedown.dragend', null);
+
+    g.selectAll('.drop')
+      .on("mouseover", null)
+      .on("mouseout", null);
+
+    drag
+      .on("dragstart", handleDragStart)
+      .on("drag", handleDrag)
+      .on("dragend", handleDragEnd)
+
+    g.selectAll('.drop')
+      .attr("class", "drop")
+      .attr("stroke", "#555")
+      .attr("stroke-opacity", 0.4)
+      .attr("stroke-width", 1.5)
+      .attr("opacity", 0.2)
+      .on("mouseover", mouseOverDropArea)
+      .on("mouseout", mouseOutDropArea);
+
+    g.selectAll('.node')
+      .call(
+        drag
+      );
+  }
+
 
   /**
    * assignInternalProperties - Assigns internal properties to each node in the
@@ -408,18 +555,10 @@ class Tree extends React.Component {
 
   recalculateNodePosition = (node, index, nodes) => {
     const { nodeSize } = this.props;
-    if (node.stackChildren && node.children) {
-      node.children
-        // .sort((first, second) => {
-        //   if (first.order && second.order) {
-        //     if (first.order < second.order)
-        //       return -1
 
-        //     if (first.order > second.order)
-        //       return 1
-        //   }
-        //   return 0
-        // })
+    if (node.stackChildren && node.children) {
+
+      node.children
         .forEach((child, index) => {
           const childNode = nodes.find(n =>
             n.id === child.id
@@ -481,11 +620,9 @@ class Tree extends React.Component {
     }
 
     nodes.forEach(this.recalculateNodePosition);
-    // nodes[0].x = 500;
-
-    console.log('hoi', nodes);
 
     const links = tree.links(nodes);
+
     return { nodes, links };
   }
 
@@ -517,7 +654,7 @@ class Tree extends React.Component {
 
   render() {
     const { nodes, links } = this.generateTree();
-    const { rd3tSvgClassName, rd3tGClassName } = this.state;
+    const { rd3tSvgClassName, rd3tGClassName, dragging } = this.state;
     const {
       nodeSvgShape,
       nodeLabelComponent,
@@ -535,11 +672,10 @@ class Tree extends React.Component {
       styles,
     } = this.props;
     const { translate, scale } = this.state.d3;
-    console.log(links, nodes, this.state.data)
-
     const subscriptions = { ...nodeSize, ...separation, depthFactor, initialDepth };
+
     return (
-      <div className={`rd3t-tree-container ${zoomable ? 'rd3t-grabbable' : undefined}`}>
+      <div className={`rd3t-tree-container ${zoomable ? 'rd3t-grabbable ' : undefined} ${dragging ? 'dragging' : undefined}`}>
         <svg className={rd3tSvgClassName} width="100%" height="100%">
           <NodeWrapper
             transitionDuration={transitionDuration}
@@ -596,6 +732,8 @@ Tree.defaultProps = {
       r: 10,
     },
   },
+  onDrag: null,
+  onDrop: null,
   nodeLabelComponent: null,
   onClick: undefined,
   onMouseOver: undefined,
@@ -635,6 +773,8 @@ Tree.propTypes = {
     shape: T.string,
     shapeProps: T.object,
   }),
+  onDrag: T.func,
+  onDrop: T.func,
   nodeLabelComponent: T.object,
   onClick: T.func,
   onMouseOver: T.func,

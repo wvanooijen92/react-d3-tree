@@ -1,6 +1,6 @@
 import React from 'react';
 import T from 'prop-types';
-import { select } from 'd3';
+import d3, { select } from 'd3';
 
 import SvgTextElement from './SvgTextElement';
 import ForeignObjectElement from './ForeignObjectElement';
@@ -9,10 +9,12 @@ import './style.css';
 export default class Node extends React.Component {
   state = {
     transform: this.setTransform(this.props.nodeData, this.props.orientation, true),
+    dragging: false,
     initialStyle: {
       opacity: 0,
     },
   };
+
 
   componentDidMount() {
     this.commitTransform();
@@ -31,6 +33,7 @@ export default class Node extends React.Component {
     nextProps.nodeData.x !== ownProps.nodeData.x ||
     nextProps.nodeData.y !== ownProps.nodeData.y ||
     nextProps.orientation !== ownProps.orientation;
+
 
   setTransform(nodeData, orientation, shouldTranslateToOrigin = false) {
     const { x, y, parent } = nodeData;
@@ -90,7 +93,8 @@ export default class Node extends React.Component {
   };
 
   handleOnMouseOver = evt => {
-    this.props.onMouseOver(this.props.nodeData.id, evt);
+    const { onMouseOver, nodeData } = this.props;
+    onMouseOver(nodeData.id, evt);
   };
 
   handleOnMouseOut = evt => {
@@ -107,9 +111,6 @@ export default class Node extends React.Component {
     const { nodeData, nodeSize, nodeLabelComponent, allowForeignObjects, styles } = this.props;
     const nodeStyle = nodeData._children ? { ...styles.node } : { ...styles.leafNode };
 
-    console.log(this.state.transform);
-
-
     return (
       <g
         id={nodeData.id}
@@ -117,14 +118,21 @@ export default class Node extends React.Component {
           this.node = n;
         }}
         style={this.state.initialStyle}
-        className={nodeData._children ? 'nodeBase' : 'leafNodeBase'}
+        className={`${this.state.dragging && 'dragging'} node ${nodeData._children ? 'nodeBase' : 'leafNodeBase'}`}
         transform={this.state.transform}
         onClick={this.handleOnClick}
         onMouseOver={this.handleOnMouseOver}
         onMouseOut={this.handleOnMouseOut}
       >
-        {this.renderNodeElement(nodeStyle)}
+        <circle
+          className="drop"
+          r="30"
 
+          ref={n => {
+            this.dropArea = n;
+          }}
+        />
+        {this.renderNodeElement(nodeStyle)}
         {allowForeignObjects && nodeLabelComponent ? (
           <ForeignObjectElement nodeData={nodeData} nodeSize={nodeSize} {...nodeLabelComponent} />
         ) : (
